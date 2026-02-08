@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   postgres:
@@ -52,6 +50,18 @@ services:
       --email admin@example.com &&
       airflow webserver & airflow scheduler
       "
+
+  spark:
+    image: apache/spark:3.5.1
+    container_name: spark
+    environment:
+        - SPARK_MODE=master
+        - SPARK_MASTER_PORT=7077
+        - SPARK_MASTER_WEBUI_PORT=8081
+    ports:
+      - "7077:7077"
+      - "8081:8081"
+
 
 
 volumes:
