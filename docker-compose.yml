@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: treasury_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mavi123
+      POSTGRES_DB: US_Treasury
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  airflow-db:
+    image: postgres:15
+    container_name: airflow_postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+
+  airflow:
+    image: apache/airflow:2.8.1
+    container_name: airflow
+    depends_on:
+      - airflow-db
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:mavi123@postgres:5432/US_Treasury
+
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - .:/opt/airflow/app
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "
+      sleep 10 &&
+      airflow db init &&
+      airflow users create
+      --username admin
+      --password admin
+      --firstname Moavia
+      --lastname Mahmood
+      --role Admin
+      --email admin@example.com &&
+      airflow webserver & airflow scheduler
+      "
+
+
+volumes:
+  postgres_data:
+  airflow_db_data:

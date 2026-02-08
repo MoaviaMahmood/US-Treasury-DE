@@ -1,0 +1,10 @@
+kafka-python 
+requests
+pandas
+os
+airflow
+airflow.operators.python
+airflow.providers.apache.spark.operators.spark_submit
+datetime
+json
+kafka
