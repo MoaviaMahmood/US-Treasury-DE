@@ -1,13 +1,6 @@
 from etl.extract import extract_and_save
 from etl.transform import transform_operating_cash_balance, transform_public_debt_transactions
 from etl.load import load_operating_cash_balance, load_public_debt_transactions
-# from airflow import DAG
-# from airflow.operators.python import PythonOperator
-# from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-# from datetime import datetime
-# import requests
-# import json
-# from kafka import KafkaProducer
 
 BASE_URL = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service"
 

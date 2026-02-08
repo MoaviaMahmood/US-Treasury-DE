@@ -8,3 +8,5 @@ airflow.providers.apache.spark.operators.spark_submit
 datetime
 json
 kafka
+pyspark.sql
+pyspark.sql.functions
