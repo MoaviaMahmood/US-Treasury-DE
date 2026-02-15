@@ -4,6 +4,7 @@ services:
     image: postgres:15
     container_name: treasury_postgres
     environment:
+      DB_HOST: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mavi123
       POSTGRES_DB: US_Treasury
