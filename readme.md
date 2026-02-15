@@ -1,187 +1,260 @@
-# US Treasury Data Engineering Pipeline  
-Medallion Architecture (Bronze → Silver → Gold) using Airflow, Spark & PostgreSQL
+# US Treasury Data Engineering Platform
+Medallion Architecture | Spark | Airflow | PostgreSQL | Docker
 
 ---
 
-## 📌 Project Overview
+## Project Overview
 
-This project builds an end-to-end Data Engineering pipeline using official US Treasury Fiscal Data APIs.
+This project implements a production-style, end-to-end data engineering platform built on the Medallion Architecture pattern (Bronze → Silver → Gold).
 
-It demonstrates:
+The pipeline ingests official U.S. Treasury Fiscal Data APIs, processes data using Apache Spark, orchestrates workflows via Apache Airflow, and loads curated business-level datasets into PostgreSQL for analytics consumption.
 
-- API-based data ingestion
-- Medallion Architecture (Bronze / Silver / Gold layers)
-- Distributed processing with Apache Spark
-- Orchestration with Apache Airflow
-- Data warehouse loading into PostgreSQL
-- Fully containerized environment using Docker Compose
-
-The goal is to simulate a production-grade modern data platform.
+The system is fully containerized using Docker Compose to simulate a scalable, modern data platform.
 
 ---
+## Business Objective
 
-## 🏗 Architecture
+Design and implement a modular, distributed data pipeline that:
+
+- Ingests structured financial data from public APIs
+- Preserves raw data for auditability
+- Applies deterministic transformations and cleansing
+- Produces analytics-ready aggregated datasets
+- Loads curated data into a relational warehouse
+- Enables workflow orchestration and observability
+
+## Architecture
 
 ```
-Raw API Data → Bronze (Raw) → Silver (Cleaned) → Gold (Aggregated) → PostgreSQL
-     ↑              ↑              ↑
-   Airflow        Spark          Spark
+                ┌──────────────────┐
+                │  Treasury APIs   │
+                └─────────┬────────┘
+                          ↓
+                ┌──────────────────┐
+                │  Bronze Layer    │  (Raw Parquet)
+                └─────────┬────────┘
+                          ↓
+                ┌──────────────────┐
+                │  Silver Layer    │  (Cleaned & Standardized)
+                └─────────┬────────┘
+                          ↓
+                ┌──────────────────┐
+                │   Gold Layer     │  (Business Aggregations)
+                └─────────┬────────┘
+                          ↓
+                ┌──────────────────┐
+                │  PostgreSQL DWH  │
+                └─────────┬────────┘
+                          ↓
+                ┌──────────────────┐
+                │     Airflow      │
+                │   Orchestration  │
+                └──────────────────┘
+
+
 ```
+## Core Components
 
-### Components
+| Component           | Responsibility                  |
+| ------------------- | ------------------------------- |
+| **Apache Spark**    | Distributed data transformation |
+| **Apache Airflow**  | Workflow orchestration          |
+| **PostgreSQL**      | Analytics data warehouse        |
+| **Docker Compose**  | Container orchestration         |
+| **Parquet Storage** | Columnar data lake storage      |
 
-- **Apache Airflow** → Orchestrates pipeline tasks
-- **Apache Spark** → Performs distributed transformations
-- **PostgreSQL** → Stores analytics-ready data
-- **Docker Compose** → Container orchestration
+## Data Sources
 
----
+Data is extracted from the official U.S. Treasury Fiscal Data API:
 
-## 📊 Data Sources
-
-Data is extracted from:
-
-- `operating_cash_balance`
-- `public_debt_transactions`
+- operating_cash_balance
+- public_debt_transactions
 
 Source:
 https://api.fiscaldata.treasury.gov/
 
 ---
+## Medallion Architecture Implementation
 
-## 🥉 Bronze Layer (Raw)
+### Bronze Layer — Raw Ingestion
 
-- Stores raw API responses
+**Objective**: Preserve source data exactly as received.
+
+- API responses stored in Parquet format
+- Immutable append-only design
 - Schema-on-read
-- Immutable append-only storage
-- Stored in Parquet format
-- Adds ingestion metadata:
+- Ingestion metadata:
   - ingestion_timestamp
   - source_system
 
-Purpose:
-Preserve original data exactly as received.
+This layer ensures auditability and reproducibility.
 
----
+### Silver Layer — Cleansed & Standardized
 
-## 🥈 Silver Layer (Cleaned)
+**Objective**: Produce reliable, structured datasets.
 
-- Standardizes data types
-- Handles null values
-- Deduplicates records
-- Converts date fields
-- Ensures numeric consistency
+- Data type normalization
+- Null handling and validation
+- Helps enforce numeric consistency
+- Deduplication
+- Date standardization
 
-Purpose:
-Create reliable, analytics-ready structured data.
+This layer ensures transformation logic is deterministic and reusable.
 
----
+### Gold Layer — Business Aggregations
 
-## 🥇 Gold Layer (Business Logic)
+**Objective**: Deliver analytics-ready datasets.
 
-- Aggregated metrics
-- Monthly debt trends
-- Fiscal year summaries
-- Transaction breakdowns
+Generated outputs include:
 
-Purpose:
-Deliver data ready for dashboards or BI tools.
+- Daily totals
+- Monthly totals
+- Monthly debt growth
+- Security-level summaries
 
----
+These tables are written to PostgreSQL for BI consumption.
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 FINANCE/
 ├── dags/
-│   └── treasury_dag.py           # Airflow DAG definition
+│   ├── treasury_dag.py
+|   └── madelion_pipeline.py
+|
 ├── data/
 │   ├── bronze/                   # Raw ingested data (Parquet)
 │   ├── silver/                   # Cleaned transformed data (Parquet)
 │   └── gold/                     # Aggregated data (Parquet)
+|
 ├── etl/
-│   ├── extract.py               # Data extraction from Treasury API
-│   ├── transform.py             # Data transformation logic
-│   ├── transform.ipynb          # Transformation notebooks
-│   └── load.py                  # Database loading functions
+│   ├── __init__.py 
+│   ├── extract.py               
+│   ├── transform.py             
+│   ├── load.py                  
+│   └── pipeline.py
+|
 ├── raw_data/                    # Raw CSV data from API
+|
 ├── spark_jobs/
 │   ├── bronze_ingest.py         # Spark job for bronze layer
 │   ├── silver_transform.py      # Spark job for silver layer
-│   └── gold_aggregations.py     # Spark job for gold layer
+│   ├── gold_aggregations.py     # Spark job for gold layer
+|   └── load_spark.py            # Spark job for loading Gold layer to Docker Postgres
+|
 ├── main.py                      # Main pipeline orchestration
 ├── docker-compose.yml           # Docker services configuration
 ├── requirements.txt             # Python dependencies
 └── readme.md                    # Project documentation
 ```
 
----
+## Running the Project
 
-## 🚀 Running the Project
-
-### 1️⃣ Start Services
+###  Start Services
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
-
+Check running containers:
+```bash
+docker ps
+```
 Services:
 - Airflow UI → http://localhost:8080
 - Spark UI → http://localhost:8081
 - PostgreSQL → localhost:5432
 
 ---
-
-### 2️⃣ Airflow Login
-
+### Run Bronze → Silver → Gold in Spark
+```bash
+docker exec -it spark bash
 ```
-Username: admin
-Password: admin
+Then:
+```bash
+/opt/spark/bin/spark-submit /opt/spark-apps/spark_jobs/gold_aggregations.py
+```
+Gold data will be written to:
+```bash
+/data/gold/
 ```
 
-Trigger the DAG:
-`treasury_data_pipeline`
+### Load Gold Layer to PostgreSQL
 
+Ensure PostgreSQL JDBC driver exists:
+```bash
+ls /opt/spark/jars | grep postgresql
+```
+
+Run:
+```bash
+/opt/spark/bin/spark-submit \
+--jars /opt/spark/jars/postgresql-42.7.3.jar \
+/opt/spark-apps/spark_jobs/gold_to_postgres.py
+```
+### Validate Warehouse Tables
+```bash
+docker exec -it treasury_postgres psql -U postgres -d US_Treasury
+```
+
+Inside psql:
+```bash
+\dt
+SELECT * FROM gold_monthly_totals LIMIT 5;
+```
+
+Expected tables:
+```bash
+gold_daily_totals
+gold_monthly_totals
+gold_monthly_debt_growth
+gold_security_totals
+```
+### Airflow Orchestration
+
+Airflow DAG orchestrates:
+
+- Bronze ingestion
+- Silver transformation
+- Gold aggregation
+- Gold load to PostgreSQL
+
+Access Airflow UI:
+```bash
+http://localhost:8080
+```
 ---
 
-## 🧠 Technical Highlights
+## Engineering Design Principles
 
-- Containerized distributed Spark environment
-- Medallion data lake design pattern
-- Separation of compute, orchestration, and storage
-- Modular ETL structure
-- Production-style folder organization
-- Reproducible local development environment
+- Separation of storage, compute, and orchestration
+- Immutable raw data layer
+- Deterministic transformation logic
+- Reproducible containerized environment
+- Modular Spark job design
+- Clear layer responsibility boundaries
 
----
+## Technical Capabilities Demonstrated
 
-## 💡 Why This Project Matters
+- Distributed processing with PySpark
+- JDBC-based warehouse loading
+- Workflow orchestration with Airflow
+- Medallion data lake architecture
+- Containerized data platform setup
+- Structured data modeling for analytics
 
-This project demonstrates:
+## Roadmap / Enhancements
 
-- Understanding of modern data lake architecture
-- Spark-based transformation pipelines
-- Orchestrated workflows using Airflow
-- Data warehouse loading patterns
-- Real-world API ingestion handling
+- Incremental loading strategy
+- Table partitioning in Gold layer
+- PostgreSQL indexing & performance tuning
+- Star schema dimensional modeling
+- Data quality validation layer
+- CI/CD for DAG deployment
+- Cloud-native deployment (AWS / GCP)
 
-It reflects how real-world financial data platforms are structured.
-
----
-
-## 🔮 Future Improvements
-
-- Incremental loading logic
-- Data quality validation checks
-- Partitioned Parquet storage
-- Star schema in Gold layer
-- CI/CD integration
-- Cloud deployment (AWS/GCP)
-
----
-
-## 👨‍💻 Author
+## Author
 
 **Moavia Mahmood**  
 Data Engineer
-Focused on building scalable data systems and distributed processing pipelines.
+
+Focused on building scalable data platforms, distributed pipelines, and production-grade ETL systems.
