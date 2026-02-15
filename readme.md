@@ -1,4 +1,4 @@
-# 🇺🇸 US Treasury Data Engineering Pipeline  
+# US Treasury Data Engineering Pipeline  
 Medallion Architecture (Bronze → Silver → Gold) using Airflow, Spark & PostgreSQL
 
 ---
