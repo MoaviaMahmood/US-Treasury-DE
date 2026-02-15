@@ -23,20 +23,21 @@ services:
       - airflow_db_data:/var/lib/postgresql/data
 
   airflow:
-    image: apache/airflow:2.8.1
+    image: apache/airflow:2.9.1
     container_name: airflow
     depends_on:
       - airflow-db
       - postgres
     environment:
       AIRFLOW__CORE__EXECUTOR: SequentialExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:mavi123@postgres:5432/US_Treasury
-
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      PYTHONPATH: /opt/airflow/app
     volumes:
       - ./dags:/opt/airflow/dags
       - .:/opt/airflow/app
     ports:
-      - "8080:8080"
+      - "8088:8088"
     command: >
       bash -c "
       sleep 10 &&
@@ -50,6 +51,7 @@ services:
       --email admin@example.com &&
       airflow webserver & airflow scheduler
       "
+
 
   spark:
     image: apache/spark:3.5.1

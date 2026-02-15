@@ -4,4 +4,3 @@ __pycache__/
 raw_data/
 etl/transform.ipynb
 DailyTreasuryStatement_20260205.pdf
-data/
